@@ -16,29 +16,27 @@ import (
 	"sync"
 )
 
-
-
 type Release struct {
 	PreviousReleasePath *string
-	Path string
-	Name string
-	Number int64
+	Path                string
+	Name                string
+	Number              int64
+	Stage               string
+	Branch              string
+	Repository          string
+	KeepReleases        int
 }
 
 
 
 type App struct {
-	Color         Color
-	Host          Host
-	Stage         string
-	Config        string
-	MetaSeparator        string
-	KeepReleases  int
-	Debug         bool
+	Color Color
+	Bash  Bash
 	Release		  Release
-	Repository		  string
-	TaskOrder []string
-	Tasks Tasks
+
+	Debug bool `default:"false"`
+	Config string `default:"deploy.json"`
+	MetaSeparator string `default:", "`
 }
 
 type Host struct {
@@ -73,9 +71,9 @@ type Config struct {
 func NewApp(color Color) App  {
 	return App{
 		Color:color,
-		Config: "deploy.json",
-		MetaSeparator: ", ",
-		KeepReleases: 10,
+		//Config: "deploy.json",
+		//MetaSeparator: ", ",
+		//KeepReleases: 10,
 	}
 }
 
@@ -239,7 +237,6 @@ func(app *App) ssh(w io.Writer, r io.Reader) (chan<- string, <-chan string) {
 func(app *App) prepare(c *cli.Context) error{
 	stage := c.Args().First()
 	app.Debug = c.Bool("debug")
-
 
 	if len(stage) < 1 {
 		return errors.New("you need to specify at least one host or stage")

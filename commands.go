@@ -13,9 +13,7 @@ type Commands struct {
 
 
 func NewCommands() Commands {
-	var Commands Commands
-
-	return Commands
+	return Commands{}
 }
 
 

@@ -2,10 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
-	"os"
-	"sort"
-
 	"github.com/urfave/cli/v2"
 )
 
@@ -54,33 +50,38 @@ func main() {
 		Email: "mail@klepov.info",
 	})
 	a :=  NewApp(color)
-	app := &cli.App{
-		Name: "Deployer",
-		Usage: "A deployment tool",
-		Version: "v1.0.0",
-		Authors: authors,
-		Commands: []*cli.Command{
-			{
-				Name:    "deploy",
-				Aliases: []string{"dep"},
-				Flags: []cli.Flag{
-					&cli.BoolFlag{Name: "debug", Aliases: []string{"d"}},
-				},
-				Usage:   "Deploy",
-				Action:  func(c *cli.Context) error {
-					return a.deploy(c)
-				},
-			},
-		},
-	}
 
-	sort.Sort(cli.FlagsByName(app.Flags))
-	sort.Sort(cli.CommandsByName(app.Commands))
+	fmt.Println(a)
 
-	err := app.Run(os.Args)
-	if err != nil {
-		color.Print(color.Fatal, "Errors:")
-		fmt.Print(color.Code.Red)
-		log.Fatal(err)
-	}
+	//
+	//
+	//app := &cli.App{
+	//	Name: "Deployer",
+	//	Usage: "A deployment tool",
+	//	Version: "v1.0.0",
+	//	Authors: authors,
+	//	Commands: []*cli.Command{
+	//		{
+	//			Name:    "deploy",
+	//			Aliases: []string{"dep"},
+	//			Flags: []cli.Flag{
+	//				&cli.BoolFlag{Name: "debug", Aliases: []string{"d"}},
+	//			},
+	//			Usage:   "Deploy",
+	//			Action:  func(c *cli.Context) error {
+	//				return a.deploy(c)
+	//			},
+	//		},
+	//	},
+	//}
+	//
+	//sort.Sort(cli.FlagsByName(app.Flags))
+	//sort.Sort(cli.CommandsByName(app.Commands))
+	//
+	//err := app.Run(os.Args)
+	//if err != nil {
+	//	color.Print(color.Fatal, "Errors:")
+	//	fmt.Print(color.Code.Red)
+	//	log.Fatal(err)
+	//}
 }
