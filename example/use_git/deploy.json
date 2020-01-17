@@ -1,0 +1,30 @@
+{
+  "repository": "git@....",
+  "keep_releases": 10,
+  "hosts": [
+    {
+      "host": "example.dev",
+      "branch": "master",
+      "stage": "master",
+      "user": "deployer",
+      "port": 22,
+      "deploy_path": "/var/www/projects/example"
+    }
+  ],
+  "tasks_order": [
+    "deploy:check",
+    "deploy:release",
+    "deploy:update_code",
+    "deploy:symlink",
+    "restart:service",
+    "cleanup"
+  ],
+  "tasks" : {
+    "remote": [
+      {
+        "name": "restart:service",
+        "command": "systemctl restart example"
+      }
+    ]
+  }
+}

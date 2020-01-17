@@ -1,34 +1,44 @@
 package main
 
 import (
+	"deploy/app"
 	"fmt"
 	"github.com/urfave/cli/v2"
 	"log"
 	"os"
 	"sort"
+
+	//"fmt"
+	//"github.com/urfave/cli/v2"
+	//"log"
+	//"os"
+	//"sort"
 )
 
 
 
 func main() {
-	color := NewColor()
-	info := color.White(`{{.Name}} - {{.Usage}}`)
-	info += color.Green(`{{if .Version}} {{.Version}}{{end}}`)
+	dep :=  app.NewApp()
+
+
+
+	info := dep.Color.White(`{{.Name}} - {{.Usage}}`)
+	info += dep.Color.Green(`{{if .Version}} {{.Version}}{{end}}`)
 
 	// EXAMPLE: Override a template
 	cli.AppHelpTemplate = info + `
 
-` + color.Yellow("USAGE:") + `
-  {{.HelpName}} {{if .VisibleFlags}}[global options]{{end}}{{if .Commands}} command [command options]{{end}} {{if .ArgsUsage}}{{.ArgsUsage}}{{else}}[arguments...]{{end}}
-  {{if .Commands}}
-` + color.Yellow("COMMANDS:") + `
-{{range .Commands}}{{if not .HideHelp}}` + color.Code.Green + `{{join .Names ", "}}` + color.Code.Default + `{{ "\t"}}{{.Usage}}{{ "\n" }}{{end}}{{end}}{{end}}{{if .VisibleFlags}}
-` + color.Yellow("GLOBAL OPTIONS:") + `
-  {{range .VisibleFlags}}{{.}}
-  {{end}}{{end}}{{if len .Authors}}
-` + color.Yellow("AUTHOR:") + `
-  {{range .Authors}}{{ . }}{{end}}
-  {{end}}
+` + dep.Color.Yellow("USAGE:") + `
+ {{.HelpName}} {{if .VisibleFlags}}[global options]{{end}}{{if .Commands}} command [command options]{{end}} {{if .ArgsUsage}}{{.ArgsUsage}}{{else}}[arguments...]{{end}}
+ {{if .Commands}}
+` + dep.Color.Yellow("COMMANDS:") + `
+{{range .Commands}}{{if not .HideHelp}}` + dep.Color.Code.Green + `{{join .Names ", "}}` + dep.Color.Code.Default + `{{ "\t"}}{{.Usage}}{{ "\n" }}{{end}}{{end}}{{end}}{{if .VisibleFlags}}
+` + dep.Color.Yellow("GLOBAL OPTIONS:") + `
+ {{range .VisibleFlags}}{{.}}
+ {{end}}{{end}}{{if len .Authors}}
+` + dep.Color.Yellow("AUTHOR:") + `
+ {{range .Authors}}{{ . }}{{end}}
+ {{end}}
 `
 
 	var authors[]*cli.Author
@@ -38,7 +48,6 @@ func main() {
 		Email: "mail@klepov.info",
 	})
 
-	app :=  NewApp(color)
 
 	cliApp := &cli.App{
 		Name: "Deployer",
@@ -54,8 +63,21 @@ func main() {
 				},
 				Usage:   "Deploy",
 				Action:  func(c *cli.Context) error {
-					return app.deploy(c)
+					return dep.Deploy(c)
 				},
+			},
+			//'Rollback to previous release'
+			{
+				Name:    "rollback",
+				Aliases: []string{"rol"},
+				Flags: []cli.Flag{
+					&cli.BoolFlag{Name: "debug", Aliases: []string{"d"}},
+				},
+				Usage:   "Rollback",
+				Action:  func(c *cli.Context) error {
+					return dep.Rollback(c)
+				},
+
 			},
 		},
 	}
@@ -65,8 +87,8 @@ func main() {
 
 	err := cliApp.Run(os.Args)
 	if err != nil {
-		color.Print(color.Fatal, "Errors:")
-		fmt.Print(color.Code.Red)
+		dep.Color.Print(dep.Color.Fatal, "Errors:")
+		fmt.Print(dep.Color.Code.Red)
 		log.Fatal(err)
 	}
 }
