@@ -1,17 +1,17 @@
 {
-  "repository": "git@...",
+  "repository": "git@....",
   "keep_releases": 10,
   "hosts": [
     {
       "host": "example.dev",
       "branch": "master",
       "stage": "master",
-      "user": "username",
+      "user": "deployer",
       "port": 22,
-      "deploy_path": "/var/www/example/master"
+      "deploy_path": "/var/www/projects/example"
     }
   ],
-  "task_order": [
+  "tasks_order": [
     "deploy:check",
     "deploy:release",
     "deploy:update_code",

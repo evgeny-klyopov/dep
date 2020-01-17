@@ -9,51 +9,86 @@ import (
 )
 
 type Bash struct {
-	User string
-	Host string
-	Port int
+	User        string
+	Host        string
+	Port        int
+	Debug       bool
+	client *ssh.Client
+	PrefixDebug string
 }
 
-func NewBash(user string, host string, port int) Bash {
+func NewBash(user string, host string, port int, debug bool, prefixDebug string) Bash {
 	return Bash{
 		User: user,
 		Host: host,
 		Port: port,
+		Debug: debug,
+		PrefixDebug: prefixDebug,
 	}
 }
 
 
-func (b *Bash) run(commands []string) error {
-	client, err := b.getClient()
 
+
+func (b *Bash) runOutput(command string) (*string, error) {
+	raw, err := b.run(command)
+
+	if err == nil {
+		output := string(raw)
+
+		outputLength := len(output)
+		if outputLength > 0 {
+			output = output[:outputLength-1]
+		}
+
+		return &output, err
+	}
+
+	return nil, err
+}
+//
+
+
+func (b *Bash) close()error {
+	return b.client.Close()
+}
+
+func (b *Bash) multiRun(commands []string) error {
+	var err error
+	for _, command := range commands {
+		_, err = b.run(command)
+
+		if err != nil {
+			break
+		}
+	}
+
+	return err
+}
+func (b *Bash) run(command string) ([]byte, error) {
+	if b.Debug == true {
+		fmt.Println(b.PrefixDebug + command)
+	}
+
+	if b.client == nil {
+		var err error
+
+		b.client, err = b.getClient()
+
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	session, err := b.client.NewSession()
 	if err != nil {
-		return err
+		return nil, err
 	}
+	defer session.Close()
 
-	for name, command := range commands {
-		func() {
-			fmt.Println(name)
+	out, err := session.CombinedOutput(command)
 
-			session, err := client.NewSession()
-			if err != nil {
-				//exit(err, " connect #" + strconv.Itoa(num) + " level 1")
-			}
-			defer session.Close()
-
-			b, err := session.CombinedOutput(command)
-			if err != nil {
-				//exit(err, " connect #" + strconv.Itoa(num) + " level 2")
-			}
-
-			fmt.Println("----------")
-			fmt.Println("Output")
-			fmt.Print(string(b))
-			fmt.Println("----------")
-			fmt.Println("")
-		}()
-	}
-
-	return nil
+	return out, err
 }
 
 func (b *Bash) getClient() (*ssh.Client, error) {
@@ -83,7 +118,7 @@ func (b *Bash) getClient() (*ssh.Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer client.Close()
+
 
 	return client, err
 }

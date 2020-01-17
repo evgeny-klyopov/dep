@@ -3,24 +3,17 @@ package main
 import (
 	"fmt"
 	"github.com/urfave/cli/v2"
+	"log"
+	"os"
+	"sort"
 )
 
 
 
 func main() {
-	//PrintMessage(Magenta, "Test")
-
-	//var color Color
-
 	color := NewColor()
 	info := color.White(`{{.Name}} - {{.Usage}}`)
 	info += color.Green(`{{if .Version}} {{.Version}}{{end}}`)
-
-
-
-
-
-
 
 	// EXAMPLE: Override a template
 	cli.AppHelpTemplate = info + `
@@ -38,50 +31,42 @@ func main() {
   {{end}}
 `
 
-
-	// EXAMPLE: Replace the `HelpPrinter` func
-	//cli.HelpPrinter = func(w io.Writer, templ string, data interface{}) {
-	//	fmt.Println("Ha HA.  I pwnd the help!!1")
-	//}
 	var authors[]*cli.Author
 
 	authors = append(authors, &cli.Author{
 		Name:  "ス",
 		Email: "mail@klepov.info",
 	})
-	a :=  NewApp(color)
 
-	fmt.Println(a)
+	app :=  NewApp(color)
 
-	//
-	//
-	//app := &cli.App{
-	//	Name: "Deployer",
-	//	Usage: "A deployment tool",
-	//	Version: "v1.0.0",
-	//	Authors: authors,
-	//	Commands: []*cli.Command{
-	//		{
-	//			Name:    "deploy",
-	//			Aliases: []string{"dep"},
-	//			Flags: []cli.Flag{
-	//				&cli.BoolFlag{Name: "debug", Aliases: []string{"d"}},
-	//			},
-	//			Usage:   "Deploy",
-	//			Action:  func(c *cli.Context) error {
-	//				return a.deploy(c)
-	//			},
-	//		},
-	//	},
-	//}
-	//
-	//sort.Sort(cli.FlagsByName(app.Flags))
-	//sort.Sort(cli.CommandsByName(app.Commands))
-	//
-	//err := app.Run(os.Args)
-	//if err != nil {
-	//	color.Print(color.Fatal, "Errors:")
-	//	fmt.Print(color.Code.Red)
-	//	log.Fatal(err)
-	//}
+	cliApp := &cli.App{
+		Name: "Deployer",
+		Usage: "A deployment tool",
+		Version: "v1.0.0",
+		Authors: authors,
+		Commands: []*cli.Command{
+			{
+				Name:    "deploy",
+				Aliases: []string{"dep"},
+				Flags: []cli.Flag{
+					&cli.BoolFlag{Name: "debug", Aliases: []string{"d"}},
+				},
+				Usage:   "Deploy",
+				Action:  func(c *cli.Context) error {
+					return app.deploy(c)
+				},
+			},
+		},
+	}
+
+	sort.Sort(cli.FlagsByName(cliApp.Flags))
+	sort.Sort(cli.CommandsByName(cliApp.Commands))
+
+	err := cliApp.Run(os.Args)
+	if err != nil {
+		color.Print(color.Fatal, "Errors:")
+		fmt.Print(color.Code.Red)
+		log.Fatal(err)
+	}
 }

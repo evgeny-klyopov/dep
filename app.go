@@ -6,42 +6,39 @@ import (
 	"fmt"
 	"github.com/go-playground/validator/v10"
 	"github.com/urfave/cli/v2"
-	"golang.org/x/crypto/ssh"
-	"io"
 	"io/ioutil"
 	"os"
-	"path"
 	"strconv"
 	"strings"
-	"sync"
 )
 
+
 type Release struct {
+	DeployPath          string `validate:"required,min=5"`
 	PreviousReleasePath *string
 	Path                string
 	Name                string
 	Number              int64
-	Stage               string
+	Stage               string `validate:"required,min=5"`
 	Branch              string
 	Repository          string
-	KeepReleases        int
+	KeepReleases        int `validate:"required,min=5"`
 }
 
-
-
 type App struct {
-	Color Color
-	Bash  Bash
-	Release		  Release
-
-	Debug bool `default:"false"`
-	Config string `default:"deploy.json"`
-	MetaSeparator string `default:", "`
+	Color         Color
+	Bash          Bash
+	Release       Release
+	Debug         bool
+	Config        string
+	TasksOrder    []string
+	Meta          Meta
+	ConfigTasks ConfigTasks
 }
 
 type Host struct {
 	Host       string `json:"host" validate:"required,min=5"`
-	Branch     string `json:"branch" validate:"required,min=1"`
+	Branch     string `json:"branch"`
 	Stage      string `json:"stage" validate:"required,min=1"`
 	User       string `json:"user" validate:"required,min=1"`
 	Port       int    `json:"port" validate:"required,min=1"`
@@ -49,261 +46,157 @@ type Host struct {
 }
 
 
-
-type Task struct {
-	Name string `json:"name"`
-	Command string `json:"command"`
-}
-type Tasks struct {
-	Remote []Task  `json:"remote"`
-	Local []Task `json:"local"`
-}
 type Config struct {
-	Repository string `json:"repository" validate:"required,min=10"`
+	Repository string `json:"repository"`
 	Hosts      []Host `json:"hosts" validate:"required,min=1"`
 	KeepReleases int `json:"keep_releases"`
-	TaskOrder []string `json:"task_order" validate:"required,min=1"`
-	Tasks Tasks `json:"tasks"`
-	//Commands Commands
+	TasksOrder []string `json:"tasks_order" validate:"required,min=1"`
+	ConfigTasks ConfigTasks `json:"tasks"`
+}
+type ConfigTask struct {
+	Name string `json:"name" validate:"required,min=1"`
+	Command string `json:"command" validate:"required,min=1"`
+}
+type ConfigTasks struct {
+	Remote []ConfigTask `json:"remote"`
+	Local []ConfigTask `json:"local"`
+}
+
+type Meta struct {
+	Name      string
+	Separator string
 }
 
 
 func NewApp(color Color) App  {
 	return App{
 		Color:color,
-		//Config: "deploy.json",
-		//MetaSeparator: ", ",
-		//KeepReleases: 10,
-	}
-}
-
-func(app *App) defaultKeyPath() string {
-	home := os.Getenv("HOME")
-	if len(home) > 0 {
-		return path.Join(home, ".ssh/id_rsa")
-	}
-	return ""
-}
-
-func(app *App) printMessageTask(task string) {
-	fmt.Println(app.Color.Code.Green + "➤" + app.Color.Code.Default + " Executing task " + app.Color.Code.Green + task + app.Color.Code.Default)
-}
-func (app *App) sshExecute(command string, in chan<- string, out <-chan string) string {
-	if app.Debug == true {
-		fmt.Println("[" + app.Host.Host + "]" + " " + app.Color.Code.Teal + "> " + app.Color.Code.Default + command)
-	}
-
-	in <- command
-
-	output := <-out
-
-	outputLen := len(output)
-	if outputLen > 4 {
-		output = output[:outputLen-4]
-	}
-
-	return output
-}
-func(app *App) runCommand(commands Commands) error {
-	var pk = app.defaultKeyPath()
-
-	key, err := ioutil.ReadFile(pk)
-	if err != nil {
-		return errors.New("Not found ssh key file[" + pk + "]")
-	}
-
-	signer, err := ssh.ParsePrivateKey(key)
-	if err != nil {
-		return errors.New("Not valid ssh key file[" + pk + "]")
-	}
-
-	config := &ssh.ClientConfig{
-		User:            app.Host.User,
-		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
-		Auth: []ssh.AuthMethod{
-			ssh.PublicKeys(signer),
+		Debug:false,
+		TasksOrder: defaultTasksOrder,
+		Config: "deploy.json",
+		Meta: Meta{
+			Name: "meta",
+			Separator: ", ",
+		},
+		Release: Release{
+			KeepReleases: 10,
 		},
 	}
+}
 
-	addr := fmt.Sprintf("%s:%d", app.Host.Host, app.Host.Port)
 
-	client, err := ssh.Dial("tcp", addr, config)
+func(app *App) printTaskName(task string) {
+	fmt.Println(app.Color.Code.Green + "➤" + app.Color.Code.Default + " Executing task " + app.Color.Code.Green + task + app.Color.Code.Default)
+}
 
-	if err != nil {
-		return err
-	}
-	defer client.Close()
 
-	session, err := client.NewSession()
-	if err != nil {
-		return err
-	}
-	defer session.Close()
 
-	modes := ssh.TerminalModes{
-		ssh.ECHO:          0,     // disable echoing
-		ssh.TTY_OP_ISPEED: 14400, // input speed = 14.4kbaud
-		ssh.TTY_OP_OSPEED: 14400, // output speed = 14.4kbaud
-	}
 
-	if err := session.RequestPty("xterm", 80, 40, modes); err != nil {
-		return err
-	}
 
-	w, err := session.StdinPipe()
-	if err != nil {
-		return err
-	}
-	r, err := session.StdoutPipe()
-	if err != nil {
-		return err
-	}
+func(app *App) run(tasks Tasks) error {
+	for _, task := range tasks.Remote {
+		app.printTaskName(task.name)
 
-	in, out := app.ssh(w, r)
-	if err := session.Start("/bin/sh"); err != nil {
-		return err
-	}
+		if err := task.method(app); err != nil {
+			_ = app.Bash.close()
 
-	<-out //ignore the shell output
-	for name, callback := range commands.Remote {
-		app.printMessageTask(name)
-		if err := callback(app, in, out); err != nil {
-			in <- "exit"
 			return err
 		}
 	}
-	in <- "exit"
 
-	err = session.Wait()
+	return app.Bash.close()
+}
 
-	if err != nil {
-		return err
+
+func(app *App) error(code string, print bool, err error, args ...interface{}) error{
+	if code != "" {
+		message := ErrorMessage(code, args...)
+
+		if print == true {
+			app.Color.Print(app.Color.Info, message)
+		}
+
+		if err == nil {
+			err = errors.New(message)
+		}
 	}
 
-	return nil
+	return err
 }
 
 
-func(app *App) ssh(w io.Writer, r io.Reader) (chan<- string, <-chan string) {
-	var wg sync.WaitGroup
 
-
-
-	//sync.WaitGroup.
-	in := make(chan string, 1)
-	out := make(chan string, 1)
-
-	wg.Add(1)
-
-
-
-	go func() {
-		for cmd := range in {
-			wg.Add(1)
-			w.Write([]byte(cmd + "\n"))
-			wg.Wait()
-		}
-	}()
-
-	go func() {
-		var (
-			buf [65 * 1024]byte
-			t   int
-		)
-		for {
-			n, err := r.Read(buf[t:])
-			if err != nil {
-				close(in)
-				close(out)
-				return
-			}
-			t += n
-			if buf[t-2] == '$' {
-				out <- string(buf[:t])
-
-				//fmt.Println("---------------")
-				//fmt.Println(out)
-				//fmt.Println("---------------")
-
-				t = 0
-				wg.Done()
-			}
-		}
-	}()
-
-	return in, out
-}
 
 func(app *App) prepare(c *cli.Context) error{
 	stage := c.Args().First()
 	app.Debug = c.Bool("debug")
 
+
 	if len(stage) < 1 {
-		return errors.New("you need to specify at least one host or stage")
+		return app.error(ErrorEmptyStage, false, nil, nil)
 	}
 
-	app.Stage = stage
+	app.Release.Stage = stage
 
 	jsonFile, err := os.Open(app.Config)
 	if err != nil {
-		app.Color.Print(app.Color.Info, "Not found configuration file [" + app.Config + "]")
-		return err
+		return app.error(NotFoundConfigurationFile, true, err, app.Config)
 	}
 	defer jsonFile.Close()
 
 	byteValue, _ := ioutil.ReadAll(jsonFile)
-	var deploy Config
+	var config Config
+	err = json.Unmarshal(byteValue, &config)
+	if err != nil {
+		return app.error(NotValidConfigurationFile, true, err, app.Config)
+	}
 
-	_ = json.Unmarshal(byteValue, &deploy)
-
-
-	//fmt.Println(deploy)
-	//
-	//return errors.New("Not valid configuration file")
+	//fmt.Println(config)
 
 	var validate = validator.New()
-	var errs = validate.Struct(deploy)
-
+	var errs = validate.Struct(config)
 	if errs != nil {
-		app.Color.Print(app.Color.Info, "Not valid configuration file [" + app.Config + "]")
-		return errs
+		return app.error(NotValidConfigurationFile, true, errs, app.Config)
 	}
 
 	var errHosts[]string
-	for i, row := range deploy.Hosts {
-		var err = validate.Struct(row)
+	for i, host := range config.Hosts {
+		var err = validate.Struct(host)
 
-		if row.Stage == app.Stage {
-			app.Host = row
+		if host.Stage == app.Release.Stage {
+			prefixDebug := "[" + host.Host + "]" + " " + app.Color.Code.Teal + "> " + app.Color.Code.Default
+
+			app.Bash = NewBash(host.User, host.Host, host.Port, app.Debug, prefixDebug)
+			app.Release.DeployPath = host.DeployPath
+			app.Release.Branch = host.Branch
+
+
 		}
 
 		if err != nil {
 			errHosts = append(errHosts, err.Error() + " [host number = " + strconv.Itoa(i) + "]")
 		}
 	}
+	app.Release.Repository = config.Repository
+	if config.KeepReleases > 0  {
+		app.Release.KeepReleases = config.KeepReleases
+	}
 
 	if len(errHosts) > 0 {
-		app.Color.Print(app.Color.Info, "Not valid configuration file [" + app.Config + "]")
-		return errors.New(strings.Join(errHosts, "\n"))
+		return app.error(NotValidConfigurationFile, true, errors.New(strings.Join(errHosts, "\n")), app.Config)
 	}
 
-	if validate.Struct(app.Host) != nil {
-		return errors.New("Not found stage[" + app.Stage + "] configuration file [" + app.Config + "]")
+	if validate.Struct(app.Release) != nil {
+		return app.error(NotFoundBranch, false, nil, app.Release.Stage, app.Config)
 	}
 
-
-	//command.Commands = deploy.Commands
-	if deploy.KeepReleases > 0  {
-		app.KeepReleases = deploy.KeepReleases
+	if app.Release.Branch == "" && app.Release.Repository != "" {
+		return app.error(NoSetBranch, false, nil, app.Release.Stage, app.Config)
 	}
 
-	app.Repository = deploy.Repository
-	app.TaskOrder = deploy.TaskOrder
-	app.Tasks = deploy.Tasks
-
-
+	app.TasksOrder = config.TasksOrder
+	app.ConfigTasks = config.ConfigTasks
 
 	return nil
 }
-
 
