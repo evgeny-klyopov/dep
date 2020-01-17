@@ -246,7 +246,7 @@ func(t *task) cleanup(app *App) error {
 
 	var commands []string
 	for _, dir := range dirs {
-		exists, _ := InArray(dir, releases)
+		exists, _ := InArray(dir, *releases)
 
 		if exists == false {
 			commands = append(commands, "cd " + app.Release.DeployPath + "/releases && rm -rf " + dir)
