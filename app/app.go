@@ -26,6 +26,8 @@ type Release struct {
 	Repository          string
 	KeepReleases        int `validate:"required,min=5"`
 	LocalDeployPath string
+	Shared      []Shared
+	Writable      []string
 }
 
 type App struct {
@@ -49,13 +51,22 @@ type Host struct {
 	DeployPath string `json:"deploy_path" validate:"required,min=1"`
 }
 
+type Shared struct {
+	Path string `json:"path"`
+	IsDir bool `json:"is_dir"`
+}
+
 type Config struct {
 	Repository      string      `json:"repository"`
 	LocalDeployPath string      `json:"local_deploy_path"`
 	Hosts           []Host      `json:"hosts" validate:"required,min=1"`
 	KeepReleases    int         `json:"keep_releases"`
 	TasksOrder      []string    `json:"tasks_order" validate:"required,min=1"`
+	Shared      []Shared    `json:"shared"`
+	Writable      []string    `json:"writable"`
 	ConfigTasks     ConfigTasks `json:"tasks"`
+
+
 }
 type ConfigTask struct {
 	Name string `json:"name" validate:"required,min=1"`
@@ -209,8 +220,8 @@ func(app *App) prepare(c *cli.Context) error{
 	app.TasksOrder = config.TasksOrder
 	app.ConfigTasks = config.ConfigTasks
 	app.Release.LocalDeployPath = config.LocalDeployPath
-
-
+	app.Release.Shared = config.Shared
+	app.Release.Writable = config.Writable
 
 	return nil
 }

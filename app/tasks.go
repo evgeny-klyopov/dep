@@ -85,7 +85,10 @@ func(t *task) defaultTasks() defaultTasks {
 	tasks["rollback:check"] = task{"rollback:check", true, t.rollbackCheck}
 	tasks["rollback:symlink"] = task{"rollback:symlink", true, t.rollbackSymlink}
 	tasks["rollback:cleanup"] = task{"rollback:cleanup", true, t.rollbackCleanup}
-	tasks["rollback:clean-meta"] = task{"rollback:clean-meta", true, t.rollbackCleanMeta}
+
+
+	tasks["deploy:shared"] = task{"deploy:shared", true, t.deployShared}
+	tasks["deploy:writable"] = task{"deploy:writable", true, t.deployWritable}
 
 	return tasks
 }
@@ -258,5 +261,47 @@ func(t *task) cleanup(app *App) error {
 
 	return app.Bash.multiRun(commands)
 }
+func(t *task) deployShared(app *App) error {
+	var err error
+	for _, dir := range app.Release.Shared {
+		if dir.IsDir == true {
+			err = app.Bash.multiRun([]string{
+				"mkdir -p " + app.Release.DeployPath + "/shared/" + dir.Path,
+				"ln -s " + app.Release.DeployPath + "/shared/" + dir.Path + " " + app.Release.Path + "/" + dir.Path,
+			})
+			if err != nil {
+				break
+			}
+		} else {
+			var out *string
+			out, err = app.Bash.runOutput("cd " + app.Release.DeployPath + "/shared/" + " && [[ -f " + dir.Path + " ]] && echo 'exist' || echo 'not_exist' ")
+			if err != nil {
+				break
+			}
 
+			if *out == "exist" {
+				_, err = app.Bash.run("ln -s " + app.Release.DeployPath + "/shared/" + dir.Path + " " + app.Release.Path + "/" + dir.Path)
+				if err != nil {
+					break
+				}
+			}
+		}
+	}
+
+	return err
+}
+func(t *task) deployWritable(app *App) error {
+	var err error
+	for _, dirPath := range app.Release.Writable {
+		err = app.Bash.multiRun([]string{
+			"chmod 0755 " + app.Release.DeployPath + "/shared/" + dirPath,
+		})
+
+		if err != nil {
+			break
+		}
+	}
+
+	return err
+}
 
