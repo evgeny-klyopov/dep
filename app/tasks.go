@@ -164,8 +164,12 @@ func(t *task) deploySymlink(app *App) error {
 	})
 }
 func(t *task) localCreateArchive(app *App) error {
-	args := []string{"-cvzf", app.ArchiveName, app.Release.LocalDeployPath}
-	return app.cmd("tar", args...)
+	args := []string{"-cvzf", app.ArchiveName, strings.Join(app.Release.LocalObjectPath, " ")}
+	err := app.cmd("tar", args...)
+
+	_ = app.cmd("rm", []string{app.ArchiveName}...)
+
+	return err
 }
 func(t *task) localSendArchive(app *App) error {
 	args := []string{"-P" + strconv.Itoa(app.Bash.Port), "-o StrictHostKeyChecking=no", app.ArchiveName, app.Bash.User + "@" + app.Bash.Host + ":" + app.Release.Path}
