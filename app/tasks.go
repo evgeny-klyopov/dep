@@ -169,8 +169,9 @@ func(t *task) localCreateArchive(app *App) error {
 
 	err := app.cmd("tar", args...)
 
-	_ = app.cmd("rm", []string{app.ArchiveName}...)
-
+	if err != nil {
+		_ = app.cmd("rm", []string{app.ArchiveName}...)
+	}
 
 	return err
 }
