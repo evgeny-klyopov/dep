@@ -101,6 +101,40 @@ func NewApp() App  {
 }
 
 
+func(app *App) GetVersion() string{
+	return "v1.0.1"
+}
+func(app *App) HelpTemplate() (appHelp string, commandHelp string){
+	info := app.Color.White(`{{.Name}} - {{.Usage}}`)
+	info += app.Color.Green(`{{if .Version}} {{.Version}}{{end}}`)
+
+	appHelp = info + `
+
+` + app.Color.Yellow("Usage:") + `
+	{{.HelpName}} {{if .VisibleFlags}}[global options]{{end}}{{if .Commands}} command [command options]{{end}} {{if .ArgsUsage}}{{.ArgsUsage}}{{else}}[arguments...]{{end}}
+ {{if .Commands}}
+` + app.Color.Yellow("Commands:") + `
+{{range .Commands}}{{if not .HideHelp}}` + "	" + app.Color.Code.Green + `{{join .Names ", "}}` + app.Color.Code.Default + `{{ "\t"}}{{.Usage}}{{ "\n" }}{{end}}{{end}}{{end}}{{if .VisibleFlags}}
+` + app.Color.Yellow("Global options:") + `
+{{range .VisibleFlags}}  {{.}}
+{{end}}{{end}}`
+
+	commandHelp = app.Color.Yellow("Description:") + ` 
+   {{.Usage}}
+
+` + app.Color.Yellow("Usage:") + `
+   {{if .UsageText}}{{.UsageText}}{{else}}{{.HelpName}}{{if .VisibleFlags}} [command options]{{end}} {{if .ArgsUsage}}{{.ArgsUsage}}{{else}}[arguments...]{{end}}{{end}}
+{{if .VisibleFlags}}
+` + app.Color.Yellow("Arguments:") + `
+	` + app.Color.Code.Green +  `stage` + app.Color.Code.Default + `{{ "\t"}}{{ "\t"}}{{ "\t"}}{{ "\t"}} Stage or hostname
+
+` + app.Color.Yellow("Options:") + `
+   {{range .VisibleFlags}}{{.}}
+   {{end}}{{end}}
+`
+	return appHelp, commandHelp
+
+}
 func(app *App) printTaskName(task string) {
 	fmt.Println(app.Color.Code.Green + "➤" + app.Color.Code.Default + " Executing task " + app.Color.Code.Green + task + app.Color.Code.Default)
 }

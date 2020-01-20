@@ -1,0 +1,58 @@
+{
+  "keep_releases": 10,
+  "hosts": [
+    {
+      "host": "example.dev",
+      "stage": "master",
+      "user": "deployer",
+      "port": 1787,
+      "deploy_path": "/var/www/projects/example"
+    }
+  ],
+  "writable": [
+    "web"
+  ],
+  "shared": [
+    {"path": "web", "is_dir":  true},
+    {"path": ".env", "is_dir":  false},
+    {"path": "dbconfig.yml", "is_dir":  false}
+  ],
+  "local_object_path": ["module-name", "migrations"],
+  "tasks_order": [
+    "build",
+    "deploy:check",
+    "deploy:release",
+    "local:create-archive",
+    "local:send-archive",
+    "deploy:extract-archive",
+    "deploy:make-executable",
+    "deploy:shared",
+    "deploy:writable",
+    "deploy:migrations",
+    "deploy:symlink",
+    "restart:service",
+    "cleanup"
+  ],
+  "tasks" : {
+    "local": [
+      {
+        "name": "build",
+        "command": "sh bin/build"
+      }
+    ],
+    "remote": [
+      {
+        "name": "deploy:make-executable",
+        "command": "cd /var/www/projects/example/master/release/ && chmod u+x module-name"
+      },
+      {
+        "name": "deploy:migrations",
+        "command": "cd /var/www/projects/example/master/release/ && sql-migrate up -env=\"production\""
+      },
+      {
+        "name": "restart:service",
+        "command": "sudo /usr/sbin/service service-for-module-name restart"
+      }
+    ]
+  }
+}
