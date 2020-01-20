@@ -243,7 +243,9 @@ func(app *App) prepare(c *cli.Context) error{
 		return app.error(NotValidConfigurationFile, true, errors.New(strings.Join(errHosts, "\n")), app.Config)
 	}
 
-	if validate.Struct(app.Release) != nil {
+	//if validate.Struct(app.Release) != nil {
+	// Костыль
+	if app.Release.DeployPath == "" {
 		return app.error(NotFoundBranch, false, nil, app.Release.Stage, app.Config)
 	}
 
