@@ -21,7 +21,7 @@ type Release struct {
 	Name                string
 	Rollback                string
 	Number              int64
-	Stage               string `validate:"required,min=5"`
+	Stage               string `validate:"required,min=2"`
 	Branch              string
 	Repository          string
 	KeepReleases        int `validate:"required,min=5"`
@@ -102,7 +102,7 @@ func NewApp() App  {
 
 
 func(app *App) GetVersion() string{
-	return "v1.0.1"
+	return "v1.0.2"
 }
 func(app *App) HelpTemplate() (appHelp string, commandHelp string){
 	info := app.Color.White(`{{.Name}} - {{.Usage}}`)
@@ -243,9 +243,7 @@ func(app *App) prepare(c *cli.Context) error{
 		return app.error(NotValidConfigurationFile, true, errors.New(strings.Join(errHosts, "\n")), app.Config)
 	}
 
-	//if validate.Struct(app.Release) != nil {
-	// Костыль
-	if app.Release.DeployPath == "" {
+	if validate.Struct(app.Release) != nil {
 		return app.error(NotFoundBranch, false, nil, app.Release.Stage, app.Config)
 	}
 
