@@ -1,3 +1,3 @@
 #!/bin/bash
 
-env GOARCH=amd64 GOOS=linux go build deploy
+env GOARCH=amd64 GOOS=linux go build github.com/evgeny-klyopov/deploy
