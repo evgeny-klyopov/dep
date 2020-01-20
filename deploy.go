@@ -1,8 +1,8 @@
 package main
 
 import (
-	"deploy/app"
 	"fmt"
+	"github.com/evgeny-klyopov/deploy/app"
 	"github.com/urfave/cli/v2"
 	"log"
 	"os"
