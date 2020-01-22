@@ -15,7 +15,7 @@ func (app *App) Deploy(c *cli.Context) error {
 	}
 
 
-	tasks := NewTasks(app.TasksOrder, app.ConfigTasks)
+	tasks := NewTasks(app.TasksOrder, app.ConfigTasks, app.Release)
 
 	err = app.run(tasks)
 

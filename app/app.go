@@ -102,7 +102,7 @@ func NewApp() App  {
 
 
 func(app *App) GetVersion() string{
-	return "v1.0.2"
+	return "v1.0.3"
 }
 func(app *App) HelpTemplate() (appHelp string, commandHelp string){
 	info := app.Color.White(`{{.Name}} - {{.Usage}}`)

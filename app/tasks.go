@@ -16,7 +16,7 @@ type Tasks []task
 
 var defaultTasksOrder = []string{"deploy:check","deploy:release","deploy:update_code","deploy:symlink","restart:service","cleanup"}
 
-func NewTasks(sequence []string, configTasks ConfigTasks) Tasks {
+func NewTasks(sequence []string, configTasks ConfigTasks, release Release) Tasks {
 	var tasks Tasks
 	var taskObject task
 
@@ -30,6 +30,8 @@ func NewTasks(sequence []string, configTasks ConfigTasks) Tasks {
 			for _, row := range configTasks.Remote {
 				if row.Name == name {
 					isFind = true
+
+					row.Command = taskObject.replaceVariable(row.Command, release)
 					tasks = append(tasks, task{
 						name,
 						true,
@@ -47,6 +49,8 @@ func NewTasks(sequence []string, configTasks ConfigTasks) Tasks {
 				for _, row := range configTasks.Local {
 					if row.Name == name {
 						isFind = true
+
+						row.Command = taskObject.replaceVariable(row.Command, release)
 						tasks = append(tasks, task{
 							name,
 							false,
@@ -68,6 +72,12 @@ func NewTasks(sequence []string, configTasks ConfigTasks) Tasks {
 	return tasks
 }
 
+func(t *task) replaceVariable(command string, release Release) string {
+	command = strings.Replace(command, "{{release_path}}", release.DeployPath + "/release", -1)
+	command = strings.Replace(command, "{{stage}}", release.Stage, -1)
+
+	return command
+}
 func(t *task) defaultTasks() defaultTasks {
 	var tasks defaultTasks
 	tasks = make(map[string]task)

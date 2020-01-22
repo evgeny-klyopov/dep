@@ -6,7 +6,7 @@
       "stage": "master",
       "user": "deployer",
       "port": 1777,
-      "deploy_path": "cd /var/www/projects/example/master"
+      "deploy_path": "/var/www/projects/example/master"
     }
   ],
   "local_object_path": ["dist"],
@@ -25,13 +25,13 @@
     "local": [
       {
         "name": "build",
-        "command": "npm run build-prod"
+        "command": "npm run build:{{stage}}"
       }
     ],
     "remote": [
       {
         "name": "deploy:remove-dist",
-        "command": "cd /var/www/projects/example/master/release/ && mv dist/* ./ && rm -rf dist"
+        "command": "cd {{release_path}} && mv dist/* ./ && rm -rf dist"
       }
     ]
   }

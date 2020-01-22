@@ -17,7 +17,7 @@ func (app *App) Rollback(c *cli.Context) error {
 		"rollback:clean-meta",
 	}
 	app.TasksOrder = tasksOrder
-	tasks := NewTasks(app.TasksOrder, ConfigTasks{})
+	tasks := NewTasks(app.TasksOrder, ConfigTasks{}, app.Release)
 
 	err = app.run(tasks)
 

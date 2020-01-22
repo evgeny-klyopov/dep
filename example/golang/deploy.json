@@ -43,11 +43,11 @@
     "remote": [
       {
         "name": "deploy:make-executable",
-        "command": "cd /var/www/projects/example/master/release/ && chmod u+x module-name"
+        "command": "cd {{release_path}} && chmod u+x module-name"
       },
       {
         "name": "deploy:migrations",
-        "command": "cd /var/www/projects/example/master/release/ && sql-migrate up -env=\"production\""
+        "command": "cd {{release_path}} && sql-migrate up -env=\"production\""
       },
       {
         "name": "restart:service",
