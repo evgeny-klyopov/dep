@@ -33,11 +33,14 @@
     "restart:service",
     "cleanup"
   ],
+  "variables": {
+    "{{build_command}}": "sh bin/build"
+  },
   "tasks" : {
     "local": [
       {
         "name": "build",
-        "command": "sh bin/build"
+        "command": "{{build_command}}"
       }
     ],
     "remote": [
