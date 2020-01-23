@@ -13,32 +13,32 @@ import (
 	"strings"
 )
 
-
 type Release struct {
 	DeployPath          string `validate:"required,min=5"`
 	PreviousReleasePath *string
 	Path                string
 	Name                string
-	Rollback                string
+	Rollback            string
 	Number              int64
 	Stage               string `validate:"required,min=2"`
 	Branch              string
 	Repository          string
 	KeepReleases        int `validate:"required,min=5"`
-	LocalObjectPath []string
-	Shared      []Shared
-	Writable      []string
+	LocalObjectPath     []string
+	Shared              []Shared
+	Writable            []string
+	Variables           map[string]string
 }
 
 type App struct {
-	Color         Color
-	Bash          Bash
-	Release       Release
-	Debug         bool
-	Config        string
-	ArchiveName        string
-	TasksOrder    []string
-	Meta          Meta
+	Color       Color
+	Bash        Bash
+	Release     Release
+	Debug       bool
+	Config      string
+	ArchiveName string
+	TasksOrder  []string
+	Meta        Meta
 	ConfigTasks ConfigTasks
 }
 
@@ -52,29 +52,28 @@ type Host struct {
 }
 
 type Shared struct {
-	Path string `json:"path"`
-	IsDir bool `json:"is_dir"`
+	Path  string `json:"path"`
+	IsDir bool   `json:"is_dir"`
 }
 
 type Config struct {
-	Repository      string      `json:"repository"`
-	LocalObjectPath []string      `json:"local_object_path"`
-	Hosts           []Host      `json:"hosts" validate:"required,min=1"`
-	KeepReleases    int         `json:"keep_releases"`
-	TasksOrder      []string    `json:"tasks_order" validate:"required,min=1"`
-	Shared      []Shared    `json:"shared"`
-	Writable      []string    `json:"writable"`
-	ConfigTasks     ConfigTasks `json:"tasks"`
-
-
+	Repository      string            `json:"repository"`
+	LocalObjectPath []string          `json:"local_object_path"`
+	Hosts           []Host            `json:"hosts" validate:"required,min=1"`
+	KeepReleases    int               `json:"keep_releases"`
+	TasksOrder      []string          `json:"tasks_order" validate:"required,min=1"`
+	Shared          []Shared          `json:"shared"`
+	Writable        []string          `json:"writable"`
+	ConfigTasks     ConfigTasks       `json:"tasks"`
+	Variables       map[string]string `json:"variables"`
 }
 type ConfigTask struct {
-	Name string `json:"name" validate:"required,min=1"`
+	Name    string `json:"name" validate:"required,min=1"`
 	Command string `json:"command" validate:"required,min=1"`
 }
 type ConfigTasks struct {
 	Remote []ConfigTask `json:"remote"`
-	Local []ConfigTask `json:"local"`
+	Local  []ConfigTask `json:"local"`
 }
 
 type Meta struct {
@@ -82,16 +81,15 @@ type Meta struct {
 	Separator string
 }
 
-
-func NewApp() App  {
+func NewApp() App {
 	return App{
-		Color:NewColor(),
-		Debug:false,
-		TasksOrder: defaultTasksOrder,
-		Config: "deploy.json",
+		Color:       NewColor(),
+		Debug:       false,
+		TasksOrder:  defaultTasksOrder,
+		Config:      "deploy.json",
 		ArchiveName: "deploy.tar.gz",
 		Meta: Meta{
-			Name: "meta",
+			Name:      "meta",
 			Separator: ", ",
 		},
 		Release: Release{
@@ -100,11 +98,10 @@ func NewApp() App  {
 	}
 }
 
-
-func(app *App) GetVersion() string{
-	return "v1.0.3"
+func (app *App) GetVersion() string {
+	return "v1.0.4"
 }
-func(app *App) HelpTemplate() (appHelp string, commandHelp string){
+func (app *App) HelpTemplate() (appHelp string, commandHelp string) {
 	info := app.Color.White(`{{.Name}} - {{.Usage}}`)
 	info += app.Color.Green(`{{if .Version}} {{.Version}}{{end}}`)
 
@@ -126,7 +123,7 @@ func(app *App) HelpTemplate() (appHelp string, commandHelp string){
    {{if .UsageText}}{{.UsageText}}{{else}}{{.HelpName}}{{if .VisibleFlags}} [command options]{{end}} {{if .ArgsUsage}}{{.ArgsUsage}}{{else}}[arguments...]{{end}}{{end}}
 {{if .VisibleFlags}}
 ` + app.Color.Yellow("Arguments:") + `
-	` + app.Color.Code.Green +  `stage` + app.Color.Code.Default + `{{ "\t"}}{{ "\t"}}{{ "\t"}}{{ "\t"}} Stage or hostname
+	` + app.Color.Code.Green + `stage` + app.Color.Code.Default + `{{ "\t"}}{{ "\t"}}{{ "\t"}}{{ "\t"}} Stage or hostname
 
 ` + app.Color.Yellow("Options:") + `
    {{range .VisibleFlags}}{{.}}
@@ -135,11 +132,11 @@ func(app *App) HelpTemplate() (appHelp string, commandHelp string){
 	return appHelp, commandHelp
 
 }
-func(app *App) printTaskName(task string) {
+func (app *App) printTaskName(task string) {
 	fmt.Println(app.Color.Code.Green + "➤" + app.Color.Code.Default + " Executing task " + app.Color.Code.Green + task + app.Color.Code.Default)
 }
 
-func(app *App) cmd(command string, args ...string) error {
+func (app *App) cmd(command string, args ...string) error {
 	prefixDebug := "[local]" + " " + app.Color.Code.Yellow + "> " + app.Color.Code.Default
 
 	if app.Debug == true {
@@ -150,7 +147,7 @@ func(app *App) cmd(command string, args ...string) error {
 
 	return cmd.Run()
 }
-func(app *App) run(tasks Tasks) error {
+func (app *App) run(tasks Tasks) error {
 	for _, task := range tasks {
 		app.printTaskName(task.name)
 
@@ -164,8 +161,7 @@ func(app *App) run(tasks Tasks) error {
 	return app.Bash.close()
 }
 
-
-func(app *App) error(code string, print bool, err error, args ...interface{}) error{
+func (app *App) error(code string, print bool, err error, args ...interface{}) error {
 	if code != "" {
 		message := ErrorMessage(code, args...)
 
@@ -181,13 +177,9 @@ func(app *App) error(code string, print bool, err error, args ...interface{}) er
 	return err
 }
 
-
-
-
-func(app *App) prepare(c *cli.Context) error{
+func (app *App) prepare(c *cli.Context) error {
 	stage := c.Args().First()
 	app.Debug = c.Bool("debug")
-
 
 	if len(stage) < 1 {
 		return app.error(ErrorEmptyStage, false, nil, nil)
@@ -216,7 +208,7 @@ func(app *App) prepare(c *cli.Context) error{
 		return app.error(NotValidConfigurationFile, true, errs, app.Config)
 	}
 
-	var errHosts[]string
+	var errHosts []string
 	for i, host := range config.Hosts {
 		var err = validate.Struct(host)
 
@@ -227,15 +219,14 @@ func(app *App) prepare(c *cli.Context) error{
 			app.Release.DeployPath = host.DeployPath
 			app.Release.Branch = host.Branch
 
-
 		}
 
 		if err != nil {
-			errHosts = append(errHosts, err.Error() + " [host number = " + strconv.Itoa(i) + "]")
+			errHosts = append(errHosts, err.Error()+" [host number = "+strconv.Itoa(i)+"]")
 		}
 	}
 	app.Release.Repository = config.Repository
-	if config.KeepReleases > 0  {
+	if config.KeepReleases > 0 {
 		app.Release.KeepReleases = config.KeepReleases
 	}
 
@@ -257,6 +248,12 @@ func(app *App) prepare(c *cli.Context) error{
 	app.Release.Shared = config.Shared
 	app.Release.Writable = config.Writable
 
+	app.Release.Variables = make(map[string]string)
+	app.Release.Variables["{{release_path}}"] = app.Release.DeployPath + "/release"
+	app.Release.Variables["{{stage}}"] = app.Release.Stage
+	for k, v := range config.Variables {
+		app.Release.Variables[k] = v
+	}
+
 	return nil
 }
-

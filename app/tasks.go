@@ -31,7 +31,7 @@ func NewTasks(sequence []string, configTasks ConfigTasks, release Release) Tasks
 				if row.Name == name {
 					isFind = true
 
-					row.Command = taskObject.replaceVariable(row.Command, release)
+					row.Command = taskObject.replaceVariable(row.Command, release.Variables)
 					tasks = append(tasks, task{
 						name,
 						true,
@@ -50,7 +50,7 @@ func NewTasks(sequence []string, configTasks ConfigTasks, release Release) Tasks
 					if row.Name == name {
 						isFind = true
 
-						row.Command = taskObject.replaceVariable(row.Command, release)
+						row.Command = taskObject.replaceVariable(row.Command, release.Variables)
 						tasks = append(tasks, task{
 							name,
 							false,
@@ -72,9 +72,13 @@ func NewTasks(sequence []string, configTasks ConfigTasks, release Release) Tasks
 	return tasks
 }
 
-func(t *task) replaceVariable(command string, release Release) string {
-	command = strings.Replace(command, "{{release_path}}", release.DeployPath + "/release", -1)
-	command = strings.Replace(command, "{{stage}}", release.Stage, -1)
+func(t *task) replaceVariable(command string, variables map[string]string) string {
+	for k, v := range variables {
+		command = strings.Replace(command, k, v, -1)
+	}
+
+	//command = strings.Replace(command, "{{release_path}}", release.DeployPath + "/release", -1)
+	//command = strings.Replace(command, "{{stage}}", release.Stage, -1)
 
 	return command
 }
