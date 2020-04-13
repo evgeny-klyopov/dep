@@ -1,3 +1,5 @@
 /.idea
 /deploy.json
 deploy.tar.gz
+dep.exe
+dep

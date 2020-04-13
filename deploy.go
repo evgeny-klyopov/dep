@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/evgeny-klyopov/deploy/app"
+	"github.com/evgeny-klyopov/dep/app"
 	"github.com/urfave/cli/v2"
 	"log"
 	"os"

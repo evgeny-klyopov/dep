@@ -1,0 +1,29 @@
+#!/bin/bash
+
+TYPE=$1
+# shellcheck disable=SC2039
+if [[ "$TYPE" == "up" ]]; then
+  TYPE="up"
+elif [[ "$TYPE" == "down" ]]; then
+  TYPE="down"
+else
+  TYPE="create"
+fi
+
+# shellcheck disable=SC2039
+if [[ "$TYPE" == "create" ]]; then
+  COMMAND='migrate create -ext sql -dir migrations '$2
+else
+  DB_CONFIG=$(grep DB_CONFIG .env | xargs)
+  DB_CONFIG=${DB_CONFIG#*=}
+
+  if [[ "$2" -ne "" ]]; then
+    TYPE=$TYPE" "$2
+  fi
+
+  # shellcheck disable=SC2089
+  COMMAND='migrate -path migrations -database "mysql://'$DB_CONFIG'" '$TYPE
+fi
+
+# shellcheck disable=SC2086
+eval $COMMAND

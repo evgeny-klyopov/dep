@@ -1,4 +1,4 @@
-module github.com/evgeny-klyopov/deploy
+module github.com/evgeny-klyopov/dep
 
 go 1.13.5
 

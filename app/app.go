@@ -200,8 +200,6 @@ func (app *App) prepare(c *cli.Context) error {
 		return app.error(NotValidConfigurationFile, true, err, app.Config)
 	}
 
-	//fmt.Println(config)
-
 	var validate = validator.New()
 	var errs = validate.Struct(config)
 	if errs != nil {
