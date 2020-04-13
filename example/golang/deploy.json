@@ -3,7 +3,7 @@
   "hosts": [
     {
       "host": "example.dev",
-      "stage": "master",
+      "stage": "prod",
       "user": "deployer",
       "port": 1787,
       "deploy_path": "/var/www/projects/example"
@@ -14,8 +14,7 @@
   ],
   "shared": [
     {"path": "web", "is_dir":  true},
-    {"path": ".env", "is_dir":  false},
-    {"path": "dbconfig.yml", "is_dir":  false}
+    {"path": ".env", "is_dir":  false}
   ],
   "local_object_path": ["module-name", "migrations"],
   "tasks_order": [
@@ -50,7 +49,7 @@
       },
       {
         "name": "deploy:migrations",
-        "command": "cd {{release_path}} && sql-migrate up -env=\"production\""
+        "command": "cd {{release_path}} && mig up"
       },
       {
         "name": "restart:service",
