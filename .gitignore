@@ -3,3 +3,5 @@
 deploy.tar.gz
 dep.exe
 dep
+dep.linux-amd64.tar.gz
+dep.windows-amd64.exe.tar.gz

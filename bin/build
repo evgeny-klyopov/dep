@@ -1,3 +1,5 @@
 #!/bin/bash
-
+go build github.com/evgeny-klyopov/dep
 env GOARCH=amd64 GOOS=linux go build github.com/evgeny-klyopov/dep
+tar -cvzf dep.linux-amd64.tar.gz dep
+tar -cvzf dep.windows-amd64.exe.tar.gz dep.exe

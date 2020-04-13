@@ -1,13 +1,14 @@
 # Настройка локальной машины
 * ОС - Windows 10 (настройка и запуск производится в консоле git-bash), Ubuntu
 ### 1. Установка
-Скачиваем файл deploy.exe(для linux deploy) и перемещаем его в директорию /usr/bin/
+Скачиваем файл dep.exe(для linux dep) и перемещаем его в директорию /usr/bin/
 ```bash
-wget https://github.com/evgeny-klyopov/dep/raw/master/deploy.exe
+wget https://github.com/evgeny-klyopov/dep/releases/download/v1.0.6/dep.windows-amd64.exe.tar.gz
+tar -xvf dep.windows-amd64.exe.tar.gz
 ```
 Название файла не важно
 ```bash
-mv dep.exe /usr/bin/dep
+mv dep.exe /usr/bin/dep.exe
 ```
 Или установка через go
 ```bash
