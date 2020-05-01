@@ -21,6 +21,14 @@
     "deploy:symlink",
     "cleanup"
   ],
+  "notifications": {
+    "telegram": [{
+      "use_proxy": true,
+      "proxy": "user:password@ip:port",
+      "chat_id": 11111,
+      "token": "your_bot_token"
+    }]
+  },
   "tasks" : {
     "local": [
       {
