@@ -32,6 +32,11 @@ type Release struct {
 	Variables           map[string]string
 }
 
+type LogTask struct {
+	Task string
+	Time string
+}
+
 type App struct {
 	Color       bashColor.Colorer
 	Bash        Bash
@@ -40,6 +45,7 @@ type App struct {
 	Config      string
 	ArchiveName string
 	TasksOrder  []string
+	ConfigNotifications *Notifications
 	Meta        Meta
 	ConfigTasks ConfigTasks
 }
@@ -53,21 +59,31 @@ type Host struct {
 	DeployPath string `json:"deploy_path" validate:"required,min=1"`
 }
 
+type Telegram struct {
+	UseProxy bool `json:"use_proxy"`
+	Proxy string `json:"proxy"`
+	ChatId int64 `json:"chat_id"`
+	Token string `json:"token"`
+}
+type Notifications struct {
+	Telegram *[]Telegram `json:"telegram"`
+}
 type Shared struct {
 	Path  string `json:"path"`
 	IsDir bool   `json:"is_dir"`
 }
 
 type Config struct {
-	Repository      string            `json:"repository"`
-	LocalObjectPath []string          `json:"local_object_path"`
-	Hosts           []Host            `json:"hosts" validate:"required,min=1"`
-	KeepReleases    int               `json:"keep_releases"`
-	TasksOrder      []string          `json:"tasks_order" validate:"required,min=1"`
-	Shared          []Shared          `json:"shared"`
-	Writable        []string          `json:"writable"`
-	ConfigTasks     ConfigTasks       `json:"tasks"`
-	Variables       map[string]string `json:"variables"`
+	Repository      string                `json:"repository"`
+	LocalObjectPath []string              `json:"local_object_path"`
+	Hosts           []Host                `json:"hosts" validate:"required,min=1"`
+	KeepReleases    int                   `json:"keep_releases"`
+	TasksOrder      []string              `json:"tasks_order" validate:"required,min=1"`
+	Shared          []Shared              `json:"shared"`
+	Writable        []string              `json:"writable"`
+	ConfigTasks     ConfigTasks           `json:"tasks"`
+	Variables       map[string]string     `json:"variables"`
+	Notifications   *Notifications `json:"notifications"`
 }
 type ConfigTask struct {
 	Name    string `json:"name" validate:"required,min=1"`
@@ -101,7 +117,7 @@ func NewApp() App {
 }
 
 func (app *App) GetVersion() string {
-	return "v1.0.7"
+	return "v1.0.8"
 }
 func (app *App) HelpTemplate() (appHelp string, commandHelp string) {
 	info := app.Color.White(`{{.Name}} - {{.Usage}}`)
@@ -135,7 +151,7 @@ func (app *App) HelpTemplate() (appHelp string, commandHelp string) {
 
 }
 func (app *App) printTaskName(task string) {
-	fmt.Print(app.Color.GetColor(bashColor.Green) + "➤" +  app.Color.GetColor(bashColor.Default) + " Executing task " + app.Color.GetColor(bashColor.Green) + task +  app.Color.GetColor(bashColor.Default))
+	fmt.Print(app.Color.GetColor(bashColor.Green) + "➤" + app.Color.GetColor(bashColor.Default) + " Executing task " + app.Color.GetColor(bashColor.Green) + task + app.Color.GetColor(bashColor.Default))
 }
 
 func (app *App) cmd(command string, args ...string) error {
@@ -152,7 +168,9 @@ func (app *App) cmd(command string, args ...string) error {
 func (app *App) printTimer(prefix string, timer time.Time) {
 	fmt.Println(prefix + app.Color.GetColor(bashColor.Purple) + fmt.Sprintf("%v", time.Since(timer)) + app.Color.GetColor(bashColor.Default))
 }
-func (app *App) run(tasks Tasks) error {
+func (app *App) run(tasks Tasks) (*[]LogTask, error) {
+	var logTasks []LogTask
+
 	prefixTaskTime := " - "
 	totalTimer := time.Now()
 	taskTimer := time.Now()
@@ -171,15 +189,17 @@ func (app *App) run(tasks Tasks) error {
 		if err := task.method(app); err != nil {
 			_ = app.Bash.close()
 
-			return err
+			return nil, err
 		}
 		app.printTimer(prefixTaskTime, taskTimer)
+		logTasks = append(logTasks, LogTask{task.name, fmt.Sprintf("%v", time.Since(taskTimer))})
 
 		taskTimer = time.Now()
 	}
+	logTasks = append(logTasks, LogTask{"Total", fmt.Sprintf("%v", time.Since(totalTimer))})
 	app.printTimer("Total - ", totalTimer)
 
-	return app.Bash.close()
+	return &logTasks, app.Bash.close()
 }
 
 func (app *App) error(code string, print bool, err error, args ...interface{}) error {
@@ -261,6 +281,7 @@ func (app *App) prepare(c *cli.Context) error {
 		return app.error(NoSetBranch, false, nil, app.Release.Stage, app.Config)
 	}
 
+	app.ConfigNotifications = config.Notifications
 	app.TasksOrder = config.TasksOrder
 	app.ConfigTasks = config.ConfigTasks
 	app.Release.LocalObjectPath = config.LocalObjectPath
