@@ -63,7 +63,11 @@ func main() {
 				Name:    "update",
 				Aliases: []string{"u"},
 				Flags: []cli.Flag{
-					&cli.BoolFlag{Name: "debug", Aliases: []string{"d"}},
+					&cli.BoolFlag{
+						Name: "debug",
+						Usage:   "Debug mode",
+						Aliases: []string{"d"},
+					},
 				},
 				Usage:   "Update deployer",
 				Action:  func(c *cli.Context) error {

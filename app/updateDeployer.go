@@ -12,6 +12,8 @@ import (
 
 
 func (app *App) UpdateDeployer(c *cli.Context) error {
+	app.setDebugFlag(c)
+
 	type cfgSystem struct{
 		ExecuteFileName string
 		ArchiveName string
@@ -63,20 +65,32 @@ func (app *App) UpdateDeployer(c *cli.Context) error {
 	}})
 
 	tasks = append(tasks, task{name: "extract-release", remote: false, method: func(app *App) error {
-		cmd := exec.Command("tar", "-xvzf", configBySystem.ArchiveName)
+		command := "tar"
+		args := []string{"-xvzf", configBySystem.ArchiveName}
+		app.printCmd(command, args...)
+
+		cmd := exec.Command(command, args...)
 		cmd.Dir = tpmPath
 
-		return  cmd.Run()
+		return cmd.Run()
 	}})
 
 	tasks = append(tasks, task{name: "update-release", remote: false, method: func(app *App) error {
-		cmd := exec.Command("mv", configBySystem.ExecuteFileName, os.Args[0])
+		command := "mv"
+		args := []string{configBySystem.ExecuteFileName, os.Args[0]}
+		app.printCmd(command, args...)
+
+		cmd := exec.Command(command, args...)
 		cmd.Dir = tpmPath
 		return cmd.Run()
 	}})
 
 	tasks = append(tasks, task{name: "clear-release", remote: false, method: func(app *App) error {
-		cmd := exec.Command("rm", configBySystem.ArchiveName)
+		command := "rm"
+		args := []string{configBySystem.ArchiveName}
+		app.printCmd(command, args...)
+
+		cmd := exec.Command(command, args...)
 		cmd.Dir = tpmPath
 		return cmd.Run()
 	}})

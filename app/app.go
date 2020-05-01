@@ -117,7 +117,7 @@ func NewApp() App {
 }
 
 func (app *App) GetVersion() string {
-	return "v1.0.10"
+	return "v1.0.9"
 }
 func (app *App) HelpTemplate() (appHelp string, commandHelp string) {
 	info := app.Color.White(`{{.Name}} - {{.Usage}}`)
@@ -154,12 +154,15 @@ func (app *App) printTaskName(task string) {
 	fmt.Print(app.Color.GetColor(bashColor.Green) + "➤" + app.Color.GetColor(bashColor.Default) + " Executing task " + app.Color.GetColor(bashColor.Green) + task + app.Color.GetColor(bashColor.Default))
 }
 
-func (app *App) cmd(command string, args ...string) error {
+func (app *App) printCmd(command string, args ...string) {
 	prefixDebug := "[local]" + " " + app.Color.GetColor(bashColor.Yellow) + "> " + app.Color.GetColor(bashColor.Default)
 
 	if app.Debug == true {
 		fmt.Println(prefixDebug + command + " " + strings.Join(args, " "))
 	}
+}
+func (app *App) cmd(command string, args ...string) error {
+	app.printCmd(command, args...)
 
 	cmd := exec.Command(command, args...)
 
@@ -218,9 +221,12 @@ func (app *App) error(code string, print bool, err error, args ...interface{}) e
 	return err
 }
 
+func (app *App) setDebugFlag(c *cli.Context) {
+	app.Debug = c.Bool("debug")
+}
 func (app *App) prepare(c *cli.Context) error {
 	stage := c.Args().First()
-	app.Debug = c.Bool("debug")
+	app.setDebugFlag(c)
 
 	if len(stage) < 1 {
 		return app.error(ErrorEmptyStage, false, nil, nil)
