@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/evgeny-klyopov/bashColor"
 	"github.com/evgeny-klyopov/dep/app"
 	"github.com/urfave/cli/v2"
 	"log"
@@ -65,9 +66,10 @@ func main() {
 	sort.Sort(cli.CommandsByName(cliApp.Commands))
 
 	err := cliApp.Run(os.Args)
+
 	if err != nil {
 		dep.Color.Print(dep.Color.Fatal, "Errors:")
-		fmt.Print(dep.Color.Code.Red)
+		fmt.Print(dep.Color.GetColor(bashColor.Red))
 		log.Fatal(err)
 	}
 }

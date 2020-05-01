@@ -77,9 +77,6 @@ func(t *task) replaceVariable(command string, variables map[string]string) strin
 		command = strings.Replace(command, k, v, -1)
 	}
 
-	//command = strings.Replace(command, "{{release_path}}", release.DeployPath + "/release", -1)
-	//command = strings.Replace(command, "{{stage}}", release.Stage, -1)
-
 	return command
 }
 func(t *task) defaultTasks() defaultTasks {

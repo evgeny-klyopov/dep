@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/evgeny-klyopov/bashColor"
 	"github.com/go-playground/validator/v10"
 	"github.com/urfave/cli/v2"
 	"io/ioutil"
@@ -11,6 +12,7 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type Release struct {
@@ -31,7 +33,7 @@ type Release struct {
 }
 
 type App struct {
-	Color       Color
+	Color       bashColor.Colorer
 	Bash        Bash
 	Release     Release
 	Debug       bool
@@ -83,7 +85,7 @@ type Meta struct {
 
 func NewApp() App {
 	return App{
-		Color:       NewColor(),
+		Color:       bashColor.NewColor(),
 		Debug:       false,
 		TasksOrder:  defaultTasksOrder,
 		Config:      "deploy.json",
@@ -99,7 +101,7 @@ func NewApp() App {
 }
 
 func (app *App) GetVersion() string {
-	return "v1.0.6"
+	return "v1.0.7"
 }
 func (app *App) HelpTemplate() (appHelp string, commandHelp string) {
 	info := app.Color.White(`{{.Name}} - {{.Usage}}`)
@@ -111,7 +113,7 @@ func (app *App) HelpTemplate() (appHelp string, commandHelp string) {
 	{{.HelpName}} {{if .VisibleFlags}}[global options]{{end}}{{if .Commands}} command [command options]{{end}} {{if .ArgsUsage}}{{.ArgsUsage}}{{else}}[arguments...]{{end}}
  {{if .Commands}}
 ` + app.Color.Yellow("Commands:") + `
-{{range .Commands}}{{if not .HideHelp}}` + "	" + app.Color.Code.Green + `{{join .Names ", "}}` + app.Color.Code.Default + `{{ "\t"}}{{.Usage}}{{ "\n" }}{{end}}{{end}}{{end}}{{if .VisibleFlags}}
+{{range .Commands}}{{if not .HideHelp}}` + "	" + app.Color.GetColor(bashColor.Green) + `{{join .Names ", "}}` + app.Color.GetColor(bashColor.Default) + `{{ "\t"}}{{.Usage}}{{ "\n" }}{{end}}{{end}}{{end}}{{if .VisibleFlags}}
 ` + app.Color.Yellow("Global options:") + `
 {{range .VisibleFlags}}  {{.}}
 {{end}}{{end}}`
@@ -123,7 +125,7 @@ func (app *App) HelpTemplate() (appHelp string, commandHelp string) {
    {{if .UsageText}}{{.UsageText}}{{else}}{{.HelpName}}{{if .VisibleFlags}} [command options]{{end}} {{if .ArgsUsage}}{{.ArgsUsage}}{{else}}[arguments...]{{end}}{{end}}
 {{if .VisibleFlags}}
 ` + app.Color.Yellow("Arguments:") + `
-	` + app.Color.Code.Green + `stage` + app.Color.Code.Default + `{{ "\t"}}{{ "\t"}}{{ "\t"}}{{ "\t"}} Stage or hostname
+	` + app.Color.GetColor(bashColor.Green) + `stage` + app.Color.GetColor(bashColor.Default) + `{{ "\t"}}{{ "\t"}}{{ "\t"}}{{ "\t"}} Stage or hostname
 
 ` + app.Color.Yellow("Options:") + `
    {{range .VisibleFlags}}{{.}}
@@ -133,11 +135,11 @@ func (app *App) HelpTemplate() (appHelp string, commandHelp string) {
 
 }
 func (app *App) printTaskName(task string) {
-	fmt.Println(app.Color.Code.Green + "➤" + app.Color.Code.Default + " Executing task " + app.Color.Code.Green + task + app.Color.Code.Default)
+	fmt.Print(app.Color.GetColor(bashColor.Green) + "➤" +  app.Color.GetColor(bashColor.Default) + " Executing task " + app.Color.GetColor(bashColor.Green) + task +  app.Color.GetColor(bashColor.Default))
 }
 
 func (app *App) cmd(command string, args ...string) error {
-	prefixDebug := "[local]" + " " + app.Color.Code.Yellow + "> " + app.Color.Code.Default
+	prefixDebug := "[local]" + " " + app.Color.GetColor(bashColor.Yellow) + "> " + app.Color.GetColor(bashColor.Default)
 
 	if app.Debug == true {
 		fmt.Println(prefixDebug + command + " " + strings.Join(args, " "))
@@ -147,8 +149,14 @@ func (app *App) cmd(command string, args ...string) error {
 
 	return cmd.Run()
 }
+func (app *App) printTimer(prefix string, timer time.Time) {
+	fmt.Println(prefix + app.Color.GetColor(bashColor.Purple) + fmt.Sprintf("%v", time.Since(timer)) + app.Color.GetColor(bashColor.Default))
+}
 func (app *App) run(tasks Tasks) error {
+	totalTimer := time.Now()
+	taskTimer := time.Now()
 	for _, task := range tasks {
+		app.printTimer(" - ", taskTimer)
 		app.printTaskName(task.name)
 
 		if err := task.method(app); err != nil {
@@ -156,7 +164,11 @@ func (app *App) run(tasks Tasks) error {
 
 			return err
 		}
+
+		taskTimer = time.Now()
 	}
+	app.printTimer(" - ", taskTimer)
+	app.printTimer("Total - ", totalTimer)
 
 	return app.Bash.close()
 }
@@ -211,7 +223,7 @@ func (app *App) prepare(c *cli.Context) error {
 		var err = validate.Struct(host)
 
 		if host.Stage == app.Release.Stage {
-			prefixDebug := "[" + host.Host + "]" + " " + app.Color.Code.Teal + "> " + app.Color.Code.Default
+			prefixDebug := "[" + host.Host + "]" + " " + app.Color.GetColor(bashColor.Teal) + "> " + app.Color.GetColor(bashColor.Default)
 
 			app.Bash = NewBash(host.User, host.Host, host.Port, app.Debug, prefixDebug)
 			app.Release.DeployPath = host.DeployPath
