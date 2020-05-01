@@ -6,7 +6,7 @@ import (
 
 
 func (app *App) Deploy(c *cli.Context) error {
-	app.printTaskName("deploy:prepare")
+	app.printTaskName("deploy:prepare\n")
 
 	err := app.prepare(c)
 

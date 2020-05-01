@@ -153,21 +153,30 @@ func (app *App) printTimer(prefix string, timer time.Time) {
 	fmt.Println(prefix + app.Color.GetColor(bashColor.Purple) + fmt.Sprintf("%v", time.Since(timer)) + app.Color.GetColor(bashColor.Default))
 }
 func (app *App) run(tasks Tasks) error {
+	prefixTaskTime := " - "
 	totalTimer := time.Now()
 	taskTimer := time.Now()
+
+	if app.Debug == true {
+		prefixTaskTime = "Time: "
+		fmt.Print("\n")
+	}
+
 	for _, task := range tasks {
-		app.printTimer(" - ", taskTimer)
 		app.printTaskName(task.name)
+		if app.Debug == true {
+			fmt.Print("\n")
+		}
 
 		if err := task.method(app); err != nil {
 			_ = app.Bash.close()
 
 			return err
 		}
+		app.printTimer(prefixTaskTime, taskTimer)
 
 		taskTimer = time.Now()
 	}
-	app.printTimer(" - ", taskTimer)
 	app.printTimer("Total - ", totalTimer)
 
 	return app.Bash.close()
