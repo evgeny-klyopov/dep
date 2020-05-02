@@ -61,7 +61,7 @@ func main() {
 			},
 			{
 				Name:    "update",
-				Aliases: []string{"u"},
+				Aliases: []string{"up"},
 				Flags: []cli.Flag{
 					&cli.BoolFlag{
 						Name: "debug",
