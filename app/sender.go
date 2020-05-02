@@ -105,7 +105,7 @@ func(t *telegram) buildMessage(messageProperties messageProperties) string {
 		"*Host:* " + messageProperties.Host + ":" + strconv.Itoa(messageProperties.Port),
 		"*Stage:* " + messageProperties.Stage,
 		"*Release Number:* " + messageProperties.Name,
-		"*Release Path:* " + messageProperties.Name,
+		"*Release Path:* " + messageProperties.Path,
 		"",
 	}
 
