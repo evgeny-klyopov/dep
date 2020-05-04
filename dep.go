@@ -4,88 +4,26 @@ import (
 	"fmt"
 	"github.com/evgeny-klyopov/bashColor"
 	"github.com/evgeny-klyopov/dep/app"
-	"github.com/urfave/cli/v2"
 	"log"
 	"os"
-	"sort"
 )
 
+var version string
+
+func init() {
+	version = "v2.0.0-alpha"
+}
+
 func main() {
-	dep :=  app.NewApp()
+	dep := app.NewApp(version)
 
-	appHelp, commandHelp := dep.HelpTemplate()
+	color := *dep.GetColor()
 
-	cli.AppHelpTemplate = appHelp
-	cli.CommandHelpTemplate = commandHelp
-
-	var authors[]*cli.Author
-	authors = append(authors, &cli.Author{
-		Name:  "ス",
-		Email: "mail@klepov.info",
-	})
-
-	cliApp := &cli.App{
-		Name: "Deployer",
-		Usage: "A deployment tool",
-		Version: dep.GetVersion(),
-		Authors: authors,
-		Commands: []*cli.Command{
-			{
-				Name:    "deploy",
-				Aliases: []string{"dep"},
-				ArgsUsage: "[<stage>]",
-				Description: "Deploy your project",
-				Flags: []cli.Flag{
-					&cli.BoolFlag{
-						Name: "debug",
-						Usage:   "Debug mode",
-						Aliases: []string{"d"},
-					},
-				},
-				Usage:   "Deploy your project",
-				Action:  func(c *cli.Context) error {
-					return dep.Deploy(c)
-				},
-			},
-			{
-				Name:    "rollback",
-				Aliases: []string{"rol"},
-				Flags: []cli.Flag{
-					&cli.BoolFlag{Name: "debug", Aliases: []string{"d"}},
-				},
-				Usage:   "Rollback to previous release",
-				Action:  func(c *cli.Context) error {
-					return dep.Rollback(c)
-				},
-
-			},
-			{
-				Name:    "update",
-				Aliases: []string{"up"},
-				Flags: []cli.Flag{
-					&cli.BoolFlag{
-						Name: "debug",
-						Usage:   "Debug mode",
-						Aliases: []string{"d"},
-					},
-				},
-				Usage:   "Update deployer",
-				Action:  func(c *cli.Context) error {
-					return dep.UpdateDeployer(c)
-				},
-
-			},
-		},
-	}
-
-	sort.Sort(cli.FlagsByName(cliApp.Flags))
-	sort.Sort(cli.CommandsByName(cliApp.Commands))
-
-	err := cliApp.Run(os.Args)
+	err := dep.GetCliApp().Run(os.Args)
 
 	if err != nil {
-		dep.Color.Print(dep.Color.Fatal, "Errors:")
-		fmt.Print(dep.Color.GetColor(bashColor.Red))
+		color.Print(color.Fatal, "Errors:")
+		fmt.Print(color.GetColor(bashColor.Red))
 		log.Fatal(err)
 	}
 }

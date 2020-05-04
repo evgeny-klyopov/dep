@@ -1,6 +1,9 @@
-package app
+package events
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+)
 
 const (
 	ErrorEmptyStage           = "empty.stage"
@@ -8,6 +11,7 @@ const (
 	NotValidConfigurationFile = "not.valid.configuration.file"
 	NoSetBranch               = "not.set.branch"
 	NotFoundBranch            = "not.found.branch"
+	NotFoundStage            = "not.found.stage"
 	NotFoundPreviousRelease   = "not.found.previous.release"
 )
 
@@ -17,15 +21,36 @@ var message = map[string]string{
 	NotValidConfigurationFile: "Not valid configuration file [%s]",
 	NoSetBranch: "Not set branch from stage[%s] in configuration file [%s]",
 	NotFoundBranch: "Not found stage[%s] configuration file [%s]",
+	NotFoundStage: "Not found stage[%s] configuration file [%s]",
 	NotFoundPreviousRelease: "Not found previous release",
 }
 
-func ErrorMessage(code string, args ...interface{}) string {
+type Error interface {
+	errorMessage(code string, args ...interface{}) string
+	getError(code string, print bool, err error, args ...interface{}) error
+}
+
+func (e *event) errorMessage(code string, args ...interface{}) string {
 	if args[0] == nil {
-		return message[code]
+	return message[code]
 	}
 
 	return fmt.Sprintf(message[code], args...)
 }
 
+func (e *event) getError(code string, print bool, err error, args ...interface{}) error {
+	if code != "" {
+		message := e.errorMessage(code, args...)
 
+		if print == true {
+			color := *(*(e.config)).GetColor()
+			color.Print(color.Info, message)
+		}
+
+		if err == nil {
+			err = errors.New(message)
+		}
+	}
+
+	return err
+}
