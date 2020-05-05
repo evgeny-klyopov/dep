@@ -33,6 +33,7 @@ func(e *event) Prepare(c *cli.Context, numberStageArguments int) error {
 	}
 
 	e.setVariables()
+	e.setBash()
 
 	return nil
 }

@@ -8,11 +8,10 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-const DeployAction = "deploy"
-const RollbackAction = "rollback"
+const DeployAction = "Deploy"
+const RollbackAction = "Rollback"
 
 type action struct {
-	debug             bool
 	event *events.Eventer
 	color             *bashColor.Colorer
 	command           *cli.Command
@@ -20,25 +19,25 @@ type action struct {
 }
 
 type Commander interface {
-	getEvent() *events.Eventer
+	//getEvent() *events.Eventer
 	initCommand() *cli.Command
 	getCommand() *cli.Command
 	setCommand(Commander) Commander
-	setDebugFlag(c *cli.Context)
+	setFlags(c *cli.Context)
 	run(c *cli.Context) error
 }
 
 func GetCommands(color *bashColor.Colorer, version string) []*cli.Command {
 	appConfig := config.NewAppConfig(version, color)
-	return []*cli.Command{
 
-		newCommand(&deploy{
-			action{
-				color:             color,
-				event: events.NewEvent(&appConfig),
-				appConfig: appConfig,
-			},
-		}),
+	action := action{
+		color:             color,
+		appConfig: appConfig,
+		event: events.NewEvent(&appConfig),
+	}
+
+	return []*cli.Command{
+		newCommand(&deploy{action}),
 	}
 }
 
@@ -46,18 +45,23 @@ func newCommand(c Commander) *cli.Command {
 	return c.setCommand(c).getCommand()
 }
 
-func (a *action) setDebugFlag(c *cli.Context) {
-	a.debug = c.Bool("debug")
+func (a *action) setFlags(c *cli.Context) {
+	a.appConfig.SetDebugFlag(c.Bool("debug"))
 }
 
-func (a *action) getEvent() *events.Eventer{
-	return a.event
-}
+//func (a *action) getEvent() *events.Eventer{
+//	return a.event
+//}
 
 func (a *action) setCommand(c Commander) Commander {
 	a.command = c.initCommand()
 	a.command.Action = func(ctx *cli.Context) error {
-		c.setDebugFlag(ctx)
+		c.setFlags(ctx)
+
+
+
+
+
 		return c.run(ctx)
 	}
 	return c

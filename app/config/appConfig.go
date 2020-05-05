@@ -5,8 +5,8 @@ import (
 )
 
 type metaSetting struct {
-	name      string
-	separator string
+	Name      string
+	Separator string
 }
 
 type appConfig struct {
@@ -15,6 +15,7 @@ type appConfig struct {
 	defaultKeepRelease   int8
 	deployArchiveName string
 	metaSetting       *metaSetting
+	flags flags
 }
 
 func (a *appConfig) GetFilePathSetting() string {
@@ -32,13 +33,25 @@ func (a *appConfig) GetMetaSetting() *metaSetting {
 func (a *appConfig) GetDefaultKeepRelease() int8 {
 	return a.defaultKeepRelease
 }
+func (a *appConfig) SetDebugFlag(value bool)  {
+	a.flags.Debug = value
+}
+func (a *appConfig) GetFlags() flags {
+	return a.flags
+}
 
 type AppConfigurator interface {
 	Configurator
+	SetDebugFlag(value bool)
 	GetFilePathSetting() string
 	GetDeployArchiveName() string
 	GetMetaSetting() *metaSetting
 	GetDefaultKeepRelease() int8
+	GetFlags() flags
+}
+
+type flags struct{
+	Debug bool
 }
 
 func NewAppConfig(version string, color *bashColor.Colorer) AppConfigurator {
@@ -51,8 +64,8 @@ func NewAppConfig(version string, color *bashColor.Colorer) AppConfigurator {
 		defaultKeepRelease:   10,
 		deployArchiveName: "deploy.tar.gz",
 		metaSetting: &metaSetting{
-			name:      "meta",
-			separator: ", ",
+			Name:      "meta",
+			Separator: ", ",
 		},
 	}
 }

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/evgeny-klyopov/bashColor"
 	"github.com/evgeny-klyopov/dep/app/config"
+	"github.com/evgeny-klyopov/dep/app/events/console"
 	"github.com/urfave/cli/v2"
 )
 
@@ -11,7 +12,9 @@ type event struct {
 	setting
 	argument
 	stage string
+	bash *console.BashConsoler
 	config *config.AppConfigurator
+	release release
 }
 //
 //func (e event) CheckInputParams() error {
@@ -51,6 +54,23 @@ func (e *event) setStage(numberStageArguments int) {
 	e.stage = e.arguments.Get(numberStageArguments)
 }
 
+//func(e *event) setBash() {
+//
+//}
+
+func(e *event) setBash() {
+	host := e.getHost()
+	var printCommand *func(command string)
+
+	if (*e.config).GetFlags().Debug == true {
+		printCommandFunc := func(command string) {
+			fmt.Println(command)
+		}
+		printCommand = &printCommandFunc
+	}
+
+	e.bash = console.NewBash(host.User, host.Host, host.Port, printCommand)
+}
 
 
 
@@ -62,5 +82,7 @@ type Eventer interface {
 	checkStage() error
 	printEventName(eventName string)
 	Prepare(c *cli.Context, n int) error
-	InitTasks(typeOperation string)
+	setBash()
+	CreateTasks([]string)Tasks
+	GetOrderTasks(typeOperation string) []string
 }

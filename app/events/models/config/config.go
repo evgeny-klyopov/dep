@@ -3,10 +3,10 @@ package config
 type Config struct {
 	Repository         *string            `json:"repository"`
 	LocalObjectPath    *[]string          `json:"local_object_path"`
-	Hosts              []host             `json:"hosts" validate:"required,dive,required"`
+	Hosts              []Host             `json:"hosts" validate:"required,dive,required"`
 	KeepReleases       *int8              `json:"keep_releases"`
 
-	TasksOrder		tasksOrder	`json:"tasks_order" validate:"required,dive,required"`
+	OrderTasks		orderTasks	`json:"order_tasks" validate:"required,dive,required"`
 	//DeployTasksOrder   []string           `json:"deploy_tasks_order" validate:"required,min=1"`
 	//RollbackTasksOrder *[]string           `json:"rollback_tasks_order"`
 
@@ -17,12 +17,12 @@ type Config struct {
 	Notifications      *notifications     `json:"notifications" validate:""`
 }
 
-type tasksOrder struct {
+type orderTasks struct {
 	Deploy []string           `json:"deploy" validate:"required,min=1"`
 	Rollback  *[]string           `json:"rollback"`
 }
 
-type host struct {
+type Host struct {
 	Host       string  `json:"host" validate:"required,min=5"`
 	Branch     *string `json:"branch"`
 	Stage      string  `json:"stage" validate:"required,min=1"`

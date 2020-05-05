@@ -11,8 +11,11 @@ type setting struct {
 }
 
 
+func (e *event) getHost() config.Host{
+	return e.deployConfig.Hosts[*(e.hostReleaseNumber)]
+}
 func (e *event) setVariables() {
-	host := e.deployConfig.Hosts[*(e.hostReleaseNumber)]
+	host := e.getHost()
 	e.variables = make(map[string]string)
 
 	if e.deployConfig.Variables != nil {
@@ -25,7 +28,7 @@ func (e *event) setVariables() {
 	e.variables["{{stage}}"] = e.stage
 }
 func (e *event) checkRepositoryConfig() error {
-	host := e.deployConfig.Hosts[*(e.hostReleaseNumber)]
+	host := e.getHost()
 
 	if host.Branch == nil && e.deployConfig.Repository != nil {
 		path := (*(e.config)).GetFilePathSetting()

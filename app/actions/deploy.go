@@ -1,6 +1,7 @@
 package actions
 
 import (
+
 	"github.com/urfave/cli/v2"
 )
 
@@ -22,18 +23,22 @@ func (d deploy) initCommand() *cli.Command {
 }
 
 func (d deploy) run(c *cli.Context) error {
-	event := *(d.getEvent())
-
-	err := event.Prepare(c, 0)
+	err := (*d.event).Prepare(c, 0)
 	if err != nil {
 		return err
 	}
 
-	event.InitTasks(DeployAction)
+	orderTasks := (*d.event).GetOrderTasks(DeployAction)
+	_ = (*d.event).CreateTasks(orderTasks)
+
+
+
+	//event.InitTasks(DeployAction)
+	//tasks := event.InitTasks(DeployAction)
 
 	//event.InitTasks()
 
-	//tasks := NewTasks(app.TasksOrder, app.ConfigTasks, app.Release)
+
 
 
 
